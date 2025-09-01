@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShapeWeaver - AI Space-Filling Curves</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            text-align: center;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            gap: 2rem;
+            width: 100%;
+        }
+
+        .canvas-section {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .canvas-section h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .canvas-container {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        #drawingCanvas {
+            border: 3px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: crosshair;
+            display: block;
+            margin: 0 auto;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        #drawingCanvas:hover {
+            border-color: #667eea;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #eee;
+            border-color: #ccc;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .results-section {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .results-section h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        #resultCanvas {
+            border: 3px solid #e0e0e0;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto 1rem auto;
+            background: white;
+        }
+
+        .animation-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .speed-slider {
+            width: 100px;
+        }
+
+        .info-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .info-panel h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: white;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            #drawingCanvas, #resultCanvas {
+                width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🎨 ShapeWeaver</h1>
+        <p>Draw any shape and watch AI weave beautiful space-filling curves</p>
+    </header>
+
+    <div class="main-container">
+        <div class="canvas-section">
+            <h2>🖊️ Draw Your Shape</h2>
+            
+            <div class="instructions">
+                <p>Click and drag to draw a closed shape on the canvas below</p>
+            </div>
+            
+            <div class="canvas-container">
+                <canvas id="drawingCanvas" width="400" height="400"></canvas>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-secondary" onclick="clearCanvas()">Clear Canvas</button>
+                <button class="btn btn-primary" onclick="generateCurve()" id="generateBtn">
+                    Generate Curve
+                </button>
+            </div>
+            
+            <div class="info-panel">
+                <h3>📊 Model Information</h3>
+                <div id="modelInfo">
+                    <div class="info-item">
+                        <span>Status:</span>
+                        <span id="modelStatus">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <h2>✨ AI-Generated Curve</h2>
+            
+            <canvas id="resultCanvas" width="400" height="400"></canvas>
+            
+            <div class="animation-controls">
+                <button class="btn btn-secondary" onclick="playAnimation()" id="playBtn">
+                    ▶️ Play Animation
+                </button>
+                <button class="btn btn-secondary" onclick="pauseAnimation()" id="pauseBtn" disabled>
+                    ⏸️ Pause
+                </button>
+                <button class="btn btn-secondary" onclick="resetAnimation()" id="resetBtn">
+                    🔄 Reset
+                </button>
+                
+                <div class="speed-control">
+                    <label for="speedSlider">Speed:</label>
+                    <input type="range" id="speedSlider" class="speed-slider" 
+                           min="1" max="20" value="10" onchange="updateAnimationSpeed()">
+                    <span id="speedValue">10x</span>
+                </div>
+            </div>
+            
+            <div class="loading" id="loadingIndicator">
+                Generating space-filling curve...
+            </div>
+            
+            <div class="info-panel">
+                <h3>📈 Curve Statistics</h3>
+                <div id="curveStats">
+                    <div class="info-item">
+                        <span>Points:</span>
+                        <span id="pointCount">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span>Progress:</span>
+                        <span id="animationProgress">0%</span>
+                    </div>
+                    <div class="info-item">
+                        <span>Status:</span>
+                        <span id="curveStatus">Waiting for input</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let drawingCanvas, drawingCtx, resultCanvas, resultCtx;
+        let isDrawing = false;
+        let currentCurve = null;
+        let animationId = null;
+        let animationIndex = 0;
+        let animationSpeed = 10;
+        let isAnimating = false;
+
+        // Initialize canvases
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCanvases();
+            loadModelInfo();
+        });
+
+        function initializeCanvases() {
+            // Drawing canvas
+            drawingCanvas = document.getElementById('drawingCanvas');
+            drawingCtx = drawingCanvas.getContext('2d');
+            
+            // Result canvas
+            resultCanvas = document.getElementById('resultCanvas');
+            resultCtx = resultCanvas.getContext('2d');
+            
+            // Set up drawing canvas
+            drawingCtx.strokeStyle = '#333';
+            drawingCtx.lineWidth = 3;
+            drawingCtx.lineCap = 'round';
+            drawingCtx.lineJoin = 'round';
+            
+            // Set up result canvas
+            resultCtx.strokeStyle = '#667eea';
+            resultCtx.lineWidth = 2;
+            resultCtx.lineCap = 'round';
+            resultCtx.lineJoin = 'round';
+            
+            // Add drawing event listeners
+            setupDrawingEvents();
+        }
+
+        function setupDrawingEvents() {
+            drawingCanvas.addEventListener('mousedown', startDrawing);
+            drawingCanvas.addEventListener('mousemove', draw);
+            drawingCanvas.addEventListener('mouseup', stopDrawing);
+            drawingCanvas.addEventListener('mouseout', stopDrawing);
+            
+            // Touch events for mobile
+            drawingCanvas.addEventListener('touchstart', handleTouch);
+            drawingCanvas.addEventListener('touchmove', handleTouch);
+            drawingCanvas.addEventListener('touchend', stopDrawing);
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = drawingCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            drawingCtx.beginPath();
+            drawingCtx.moveTo(x, y);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = drawingCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            drawingCtx.lineTo(x, y);
+            drawingCtx.stroke();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 
+                                            e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            drawingCanvas.dispatchEvent(mouseEvent);
+        }
+
+        function clearCanvas() {
+            drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            clearResults();
+        }
+
+        function clearResults() {
+            resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+            currentCurve = null;
+            updateCurveStats(0, 0, 'Canvas cleared');
+            resetAnimation();
+        }
+
+        async function generateCurve() {
+            const generateBtn = document.getElementById('generateBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            // Disable button and show loading
+            generateBtn.disabled = true;
+            loadingIndicator.style.display = 'block';
+            updateCurveStats(0, 0, 'Generating...');
+            
+            try {
+                // Get image data from canvas
+                const imageData = drawingCanvas.toDataURL('image/png');
+                
+                // Send to backend
+                const response = await fetch('/api/generate_curve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image_data: imageData
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentCurve = result.curve_points;
+                    updateCurveStats(result.num_points, 0, 'Ready to animate');
+                    resetAnimation();
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+                
+            } catch (error) {
+                console.error('Error generating curve:', error);
+                updateCurveStats(0, 0, 'Error: ' + error.message);
+            } finally {
+                generateBtn.disabled = false;
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        function playAnimation() {
+            if (!currentCurve || currentCurve.length === 0) {
+                alert('Please generate a curve first!');
+                return;
+            }
+            
+            isAnimating = true;
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('pauseBtn').disabled = false;
+            updateCurveStats(currentCurve.length, animationIndex, 'Animating...');
+            
+            animate();
+        }
+
+        function pauseAnimation() {
+            isAnimating = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            updateCurveStats(currentCurve.length, animationIndex, 'Paused');
+        }
+
+        function resetAnimation() {
+            pauseAnimation();
+            animationIndex = 0;
+            resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+            
+            if (currentCurve) {
+                updateCurveStats(currentCurve.length, 0, 'Ready to animate');
+            }
+        }
+
+        function animate() {
+            if (!isAnimating || !currentCurve || animationIndex >= currentCurve.length) {
+                if (animationIndex >= currentCurve.length) {
+                    updateCurveStats(currentCurve.length, currentCurve.length, 'Animation complete');
+                }
+                pauseAnimation();
+                return;
+            }
+            
+            // Draw multiple points per frame based on speed
+            const pointsPerFrame = Math.max(1, animationSpeed);
+            
+            for (let i = 0; i < pointsPerFrame && animationIndex < currentCurve.length; i++) {
+                const point = currentCurve[animationIndex];
+                const x = point[0] * resultCanvas.width;
+                const y = point[1] * resultCanvas.height;
+                
+                if (animationIndex === 0) {
+                    resultCtx.beginPath();
+                    resultCtx.moveTo(x, y);
+                } else {
+                    resultCtx.lineTo(x, y);
+                    resultCtx.stroke();
+                }
+                
+                animationIndex++;
+            }
+            
+            // Update progress
+            const progress = Math.round((animationIndex / currentCurve.length) * 100);
+            updateCurveStats(currentCurve.length, animationIndex, `Animating... ${progress}%`);
+            
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function updateAnimationSpeed() {
+            const slider = document.getElementById('speedSlider');
+            const speedValue = document.getElementById('speedValue');
+            animationSpeed = parseInt(slider.value);
+            speedValue.textContent = animationSpeed + 'x';
+        }
+
+        function updateCurveStats(totalPoints, currentPoint, status) {
+            document.getElementById('pointCount').textContent = totalPoints.toLocaleString();
+            document.getElementById('animationProgress').textContent = 
+                totalPoints > 0 ? Math.round((currentPoint / totalPoints) * 100) + '%' : '0%';
+            document.getElementById('curveStatus').textContent = status;
+        }
+
+        async function loadModelInfo() {
+            try {
+                const response = await fetch('/api/model_info');
+                const info = await response.json();
+                
+                const modelStatus = document.getElementById('modelStatus');
+                const modelInfo = document.getElementById('modelInfo');
+                
+                if (info.model_loaded) {
+                    modelStatus.textContent = 'Loaded ✅';
+                    
+                    if (info.model_summary) {
+                        const summary = info.model_summary;
+                        modelInfo.innerHTML = `
+                            <div class="info-item">
+                                <span>Status:</span>
+                                <span>Loaded ✅</span>
+                            </div>
+                            <div class="info-item">
+                                <span>Parameters:</span>
+                                <span>${summary.total_params.toLocaleString()}</span>
+                            </div>
+                            <div class="info-item">
+                                <span>Latent Dim:</span>
+                                <span>${summary.latent_dim}</span>
+                            </div>
+                            <div class="info-item">
+                                <span>Max Length:</span>
+                                <span>${summary.max_sequence_length.toLocaleString()}</span>
+                            </div>
+                        `;
+                    }
+                } else {
+                    modelStatus.textContent = 'Not loaded ❌';
+                }
+            } catch (error) {
+                console.error('Error loading model info:', error);
+                document.getElementById('modelStatus').textContent = 'Error ❌';
+            }
+        }
+    </script>
+</body>
+</html>
