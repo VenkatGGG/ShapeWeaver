@@ -1,0 +1,52 @@
+{
+  "dataset_info": {
+    "name": "ShapeWeaver Synthetic Dataset",
+    "version": "1.0",
+    "description": "Synthetic dataset of shape masks and space-filling curves",
+    "total_samples": 10,
+    "image_size": 256,
+    "shape_types": {
+      "random": 0.4,
+      "convex": 0.3,
+      "circle": 0.15,
+      "ellipse": 0.15
+    }
+  },
+  "statistics": {
+    "total_samples": 10,
+    "image_size": 256,
+    "coverage_stats": {
+      "mean": 100.0,
+      "std": 0.0,
+      "min": 100.0,
+      "max": 100.0,
+      "median": 100.0
+    },
+    "curve_length_stats": {
+      "mean": 10497.5,
+      "std": 3302.9008537950394,
+      "min": 5807.0,
+      "max": 16687.0,
+      "median": 9446.0
+    },
+    "shape_size_stats": {
+      "mean": 10497.5,
+      "std": 3302.9008537950394,
+      "min": 5807.0,
+      "max": 16687.0,
+      "median": 9446.0
+    },
+    "density_stats": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "median": 1.0
+    }
+  },
+  "file_format": {
+    "images": "PNG files (256x256 grayscale, binary masks)",
+    "curves": "JSON files with curve points and metadata",
+    "naming": "shape_XXXXXX.png / curve_XXXXXX.json"
+  }
+}
